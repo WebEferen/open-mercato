@@ -1075,11 +1075,13 @@ function Sync-CorporateCerts {
     # builds anything.
     if (-not $script:RepoRoot) { return }
     $sourceDir = Join-Path $script:RepoRoot "docker\certs"
-    if (-not (Test-Path $sourceDir)) { return }
+    $targetDir = Join-Path $script:RepoRoot "docker\opencode\certs"
+    # Both directories are COPY'd by the Dockerfiles - recreate them when a
+    # partial checkout / ZIP download lost them, so builds never fail on that.
+    New-Item -Path $sourceDir -ItemType Directory -Force | Out-Null
+    New-Item -Path $targetDir -ItemType Directory -Force | Out-Null
     $certFiles = @(Get-ChildItem -Path $sourceDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq ".crt" -or $_.Extension -eq ".pem" })
     if ($certFiles.Count -eq 0) { return }
-    $targetDir = Join-Path $script:RepoRoot "docker\opencode\certs"
-    New-Item -Path $targetDir -ItemType Directory -Force | Out-Null
     foreach ($certFile in $certFiles) {
         Copy-Item -Path $certFile.FullName -Destination (Join-Path $targetDir $certFile.Name) -Force
     }

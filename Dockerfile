@@ -11,7 +11,9 @@ WORKDIR /app
 # The certs land in /usr/local/share/ca-certificates so a later
 # update-ca-certificates keeps them, AND get appended to the live bundle so the
 # very first apk fetch below already trusts the proxy.
-COPY docker/certs/ /tmp/om-certs/
+# cert[s] is a glob + .dockerignore an always-present anchor: the COPY then
+# succeeds even when docker/certs/ is missing from a partial checkout.
+COPY .dockerignore docker/cert[s] /tmp/om-certs/
 RUN set -eu; \
     mkdir -p /usr/local/share/ca-certificates; \
     for cert in /tmp/om-certs/*.crt /tmp/om-certs/*.pem; do \
@@ -98,7 +100,9 @@ ENV NODE_ENV=development     NEXT_TELEMETRY_DISABLED=1     TURBO_CACHE_DIR=/app/
 WORKDIR /app
 
 # Corporate proxy CA trust - see the builder stage comment / docker/certs/README.md.
-COPY docker/certs/ /tmp/om-certs/
+# cert[s] is a glob + .dockerignore an always-present anchor: the COPY then
+# succeeds even when docker/certs/ is missing from a partial checkout.
+COPY .dockerignore docker/cert[s] /tmp/om-certs/
 RUN set -eu; \
     mkdir -p /usr/local/share/ca-certificates; \
     for cert in /tmp/om-certs/*.crt /tmp/om-certs/*.pem; do \
@@ -171,7 +175,9 @@ WORKDIR /app
 # Corporate proxy CA trust - see the builder stage comment / docker/certs/README.md.
 # Baked into the runtime stage too: the entrypoint's fallback `yarn install`
 # and any in-container downloads hit the same intercepting proxy.
-COPY docker/certs/ /tmp/om-certs/
+# cert[s] is a glob + .dockerignore an always-present anchor: the COPY then
+# succeeds even when docker/certs/ is missing from a partial checkout.
+COPY .dockerignore docker/cert[s] /tmp/om-certs/
 RUN set -eu; \
     mkdir -p /usr/local/share/ca-certificates; \
     for cert in /tmp/om-certs/*.crt /tmp/om-certs/*.pem; do \
@@ -232,7 +238,9 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 # Corporate proxy CA trust - see the builder stage comment / docker/certs/README.md.
-COPY docker/certs/ /tmp/om-certs/
+# cert[s] is a glob + .dockerignore an always-present anchor: the COPY then
+# succeeds even when docker/certs/ is missing from a partial checkout.
+COPY .dockerignore docker/cert[s] /tmp/om-certs/
 RUN set -eu; \
     mkdir -p /usr/local/share/ca-certificates; \
     for cert in /tmp/om-certs/*.crt /tmp/om-certs/*.pem; do \

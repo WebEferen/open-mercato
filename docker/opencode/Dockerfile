@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # trusts but this build does not, breaking the installer download below. Trust
 # any PEM dropped into certs/ (the Windows launcher mirrors docker/certs/ here;
 # see docker/certs/README.md). No-op when the directory is empty.
-COPY certs/ /tmp/om-certs/
+# cert[s] is a glob + AGENTS.md an always-present anchor: the COPY then
+# succeeds even when certs/ is missing from a partial checkout.
+COPY AGENTS.md cert[s] /tmp/om-certs/
 RUN set -eu; \
     for cert in /tmp/om-certs/*.crt /tmp/om-certs/*.pem; do \
         [ -f "$cert" ] || continue; \
