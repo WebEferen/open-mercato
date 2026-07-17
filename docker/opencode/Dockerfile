@@ -4,6 +4,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates bash passwd \
     && rm -rf /var/lib/apt/lists/*
 
+# Corporate TLS-intercepting proxies re-sign HTTPS with a root CA the host
+# trusts but this build does not, breaking the installer download below. Trust
+# any PEM dropped into certs/ (the Windows launcher mirrors docker/certs/ here;
+# see docker/certs/README.md). No-op when the directory is empty.
+COPY certs/ /tmp/om-certs/
+RUN set -eu; \
+    for cert in /tmp/om-certs/*.crt /tmp/om-certs/*.pem; do \
+        [ -f "$cert" ] || continue; \
+        name="$(basename "$cert")"; \
+        cp "$cert" "/usr/local/share/ca-certificates/om-extra-${name%.*}.crt"; \
+    done; \
+    update-ca-certificates; \
+    rm -rf /tmp/om-certs
+
 # Install OpenCode and move to system path. The installer resolves "latest"
 # through the unauthenticated GitHub API, which rate-limits shared/corporate
 # IPs and fails transiently ("Failed to fetch version information") - so retry
