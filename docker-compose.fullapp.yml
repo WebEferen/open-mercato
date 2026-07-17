@@ -4,6 +4,10 @@ services:
   opencode:
     build:
       context: ./docker/opencode
+      args:
+        # Optional pin (skips the installer's GitHub API lookup, which
+        # rate-limits shared/corporate IPs). Empty = latest.
+        OPENCODE_VERSION: ${OPENCODE_VERSION:-}
     image: opencode-mvp
     container_name: mercato-opencode-${DEPLOY_ENV:-local}
     restart: unless-stopped

@@ -4,9 +4,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates bash passwd \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OpenCode and move to system path
-RUN curl -fsSL https://opencode.ai/install | bash && \
-    cp /root/.opencode/bin/opencode /usr/local/bin/opencode && \
+# Install OpenCode and move to system path. The installer resolves "latest"
+# through the unauthenticated GitHub API, which rate-limits shared/corporate
+# IPs and fails transiently ("Failed to fetch version information") - so retry
+# the install, and let OPENCODE_VERSION pin an exact version, which skips the
+# API lookup entirely: docker compose build --build-arg OPENCODE_VERSION=x.y.z
+ARG OPENCODE_VERSION=""
+RUN set -eu; \
+    curl -fsSL --retry 3 --retry-delay 5 https://opencode.ai/install -o /tmp/opencode-install.sh; \
+    install_args=""; \
+    if [ -n "$OPENCODE_VERSION" ]; then install_args="--version $OPENCODE_VERSION"; fi; \
+    attempt=1; \
+    until bash /tmp/opencode-install.sh $install_args; do \
+        if [ "$attempt" -ge 3 ]; then echo "OpenCode install failed after $attempt attempts" >&2; exit 1; fi; \
+        attempt=$((attempt + 1)); \
+        echo "OpenCode install failed - retrying (attempt $attempt of 3)..." >&2; \
+        sleep 10; \
+    done; \
+    rm -f /tmp/opencode-install.sh; \
+    cp /root/.opencode/bin/opencode /usr/local/bin/opencode; \
     chmod +x /usr/local/bin/opencode
 
 # Create non-root user
